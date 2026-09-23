@@ -275,4 +275,3 @@ This project brings several technologies together into one local CI/CD workflow:
 
 The main goal of this project is to gain practical experience with the tools and workflow commonly used in modern **AWS, DevOps, containerization, CI/CD, and Kubernetes environments**.
 
-> **Note:** The AWS credentials used in this project (`test` / `test`) are dummy credentials for the local FLoCI environment and are not real AWS credentials.
