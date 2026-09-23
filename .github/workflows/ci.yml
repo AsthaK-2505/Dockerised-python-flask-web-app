@@ -1,0 +1,33 @@
+name: Flask CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ci:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Check Python
+        run: |
+          python3 --version
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install -r requirements.txt
+
+      - name: Test Flask application
+        run: |
+          python3 -c "from app import app; client = app.test_client(); response = client.get('/'); assert response.status_code == 200; print('Flask test passed!')"
+
+      - name: Build Docker image
+        run: |
+          docker build -t flask-app:${{ github.sha }} .
