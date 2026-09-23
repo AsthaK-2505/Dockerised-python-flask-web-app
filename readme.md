@@ -16,3 +16,8 @@ A lightweight Flask web application containerized using Docker.
 
 3. **Access the App:**
    Open `http://localhost:5000` in your browser.
+
+
+## Local CI/CD
+
+This project is built and deployed locally using GitHub Actions, FLoCI, Docker, and Minikube.
