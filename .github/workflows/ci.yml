@@ -1,4 +1,4 @@
-name: Flask CI
+name: Flask CI-CD
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  ci:
+  ci-cd:
     runs-on: self-hosted
 
     env:
@@ -62,18 +62,44 @@ jobs:
             flask-app:${{ github.sha }} \
             $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
 
-          docker tag \
-            flask-app:${{ github.sha }} \
-            $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
       - name: Push Docker image to FLoCI ECR
         run: |
           docker push \
             $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
 
-          docker push \
-            $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
-      - name: Verify Docker Registry
+      - name: Verify FLoCI Registry
         run: |
-          curl http://localhost:5100/v2/flask-app/tags/list
+          curl -fsS http://localhost:5100/v2/flask-app/tags/list
+
+      - name: Start Minikube
+        run: |
+          minikube start --driver=docker
+
+      - name: Check Kubernetes cluster
+        run: |
+          kubectl get nodes
+
+      - name: Load image into Minikube
+        run: |
+          minikube image load \
+            $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
+
+      - name: Apply Kubernetes configuration
+        run: |
+          kubectl apply -f k8s/deployment.yml
+          kubectl apply -f k8s/service.yml
+
+      - name: Update Kubernetes image
+        run: |
+          kubectl set image deployment/flask-app \
+            flask-app=$ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
+
+      - name: Wait for deployment
+        run: |
+          kubectl rollout status deployment/flask-app --timeout=120s
+
+      - name: Show Kubernetes resources
+        run: |
+          kubectl get deployments
+          kubectl get pods
+          kubectl get services
