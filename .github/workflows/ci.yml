@@ -20,13 +20,18 @@ jobs:
         run: |
           python3 --version
 
+      - name: Create virtual environment
+        run: |
+          python3 -m venv .venv
+
       - name: Install dependencies
         run: |
-          python3 -m pip install -r requirements.txt
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
 
       - name: Test Flask application
         run: |
-          python3 -c "from app import app; client = app.test_client(); response = client.get('/'); assert response.status_code == 200; print('Flask test passed!')"
+          .venv/bin/python -c "from app import app; client = app.test_client(); response = client.get('/'); assert response.status_code == 200; print('Flask test passed!')"
 
       - name: Build Docker image
         run: |
