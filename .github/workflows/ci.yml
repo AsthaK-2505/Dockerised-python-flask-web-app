@@ -12,7 +12,17 @@ jobs:
   ci:
     runs-on: self-hosted
 
+    env:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://localhost:4566
+
+      ECR_REGISTRY: 000000000000.dkr.ecr.us-east-1.localhost:5100
+      ECR_REPOSITORY: flask-app
+
     steps:
+
       - name: Checkout source code
         uses: actions/checkout@v4
 
@@ -36,3 +46,34 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t flask-app:${{ github.sha }} .
+
+      - name: Login to FLoCI ECR
+        run: |
+          aws ecr get-login-password \
+            --endpoint-url "$AWS_ENDPOINT_URL" \
+            --region "$AWS_DEFAULT_REGION" \
+          | docker login \
+            --username AWS \
+            --password-stdin "$ECR_REGISTRY"
+
+      - name: Tag Docker image
+        run: |
+          docker tag \
+            flask-app:${{ github.sha }} \
+            $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
+
+          docker tag \
+            flask-app:${{ github.sha }} \
+            $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      - name: Push Docker image to FLoCI ECR
+        run: |
+          docker push \
+            $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
+
+          docker push \
+            $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      - name: Verify Docker Registry
+        run: |
+          curl http://localhost:5100/v2/flask-app/tags/list
